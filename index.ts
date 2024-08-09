@@ -74,6 +74,13 @@ async function run() {
     }
     console.log(trip)
 
+    if (update.trip.scheduleRelationship === ScheduleRelationship.UNSCHEDULED) {
+      const message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`
+      console.log(message)
+      sendSMS(message)
+      return
+    }
+
     const stopUpdate = update.stopTimeUpdate.find((stopTimeUpdate) => stopTimeUpdate.stopId === scheduledStopTime.stop_id)
 
     if (!stopUpdate) {
