@@ -16,10 +16,6 @@ enum ScheduleRelationship {
 
 const MIN_DELAY_TO_NOTIFY = 30 // seconds
 
-const routePrefix = 'APS_1'
-
-const trainTime = '07:56'
-
 async function run() {
   const log = initialiseLogger()
   deleteOldLogs()
@@ -40,7 +36,7 @@ async function run() {
   const stopNameForId = new Map(stationStops.map((stop) => [stop.stop_id, stop.stop_name]))
 
   // Get trips
-  const routeTrips = await readFilteredTrainsCSV('trips.txt', (record) => record.route_id.startsWith(routePrefix))
+  const routeTrips = await readFilteredTrainsCSV('trips.txt', (record) => record.route_id.startsWith(process.env.ROUTE_PREFIX!))
   const routeTripIds = new Set(routeTrips.map((trip) => trip.trip_id))
   const tripForId = new Map(routeTrips.map((trip) => [trip.trip_id, trip]))
 
@@ -48,7 +44,7 @@ async function run() {
   const relevantStopTimes = await readFilteredTrainsCSV('stop_times.txt', (record) => (
     routeTripIds.has(record.trip_id) &&
     stationStopIds.has(record.stop_id) &&
-    record.departure_time.startsWith(trainTime)
+    record.departure_time.startsWith(process.env.TRAIN_TIME!)
   ))
 
   if (relevantStopTimes.length === 0) {
