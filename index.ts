@@ -5,6 +5,7 @@ import * as unzipper from 'unzipper'
 
 import { readFilteredTrainsCSV, getTripUpdates, downloadDataFileZip, deleteOldDataZips } from './data'
 import { sendSMS } from './sms'
+import { deleteOldLogs, initialiseLogger } from './log'
 
 enum ScheduleRelationship {
   SCHEDULED = 0,
@@ -20,14 +21,17 @@ const routePrefix = 'APS_1'
 const trainTime = '07:56'
 
 async function run() {
+  const log = initialiseLogger()
+  deleteOldLogs()
+
   // Download the GTFS files
-  const dataFileZipFilename = await downloadDataFileZip()
+  const dataFileZipFilename = await downloadDataFileZip(log)
 
   if (dataFileZipFilename) {
     await fs.createReadStream(dataFileZipFilename)
       .pipe(unzipper.Extract({ path: path.join(__dirname, 'sydneytrains_GTFS') }))
       .promise()
-    await deleteOldDataZips(dataFileZipFilename)
+    await deleteOldDataZips(dataFileZipFilename, log)
   }
 
   // Get stops
@@ -48,21 +52,20 @@ async function run() {
   ))
 
   if (relevantStopTimes.length === 0) {
-    console.log('No relevant stop times found')
+    log('No relevant stop times found')
     sendSMS('Could not check for train delays - no relevant stop times found in timetable data')
     return
   }
 
   const relevantTripIds = new Set(relevantStopTimes.map((stopTime) => stopTime.trip_id))
 
-  const updates = await getTripUpdates(relevantTripIds)
+  const updates = await getTripUpdates(relevantTripIds, log)
 
   for (const update of updates) {
-    console.log(update)
-    console.log(update.stopTimeUpdate[0])
+    log('Update:', update)
 
     const scheduledStopTime = relevantStopTimes.find((stopTime) => stopTime.trip_id === update.trip.tripId)
-    console.log(scheduledStopTime)
+    log('Scheduled stop time:', scheduledStopTime)
     if (!scheduledStopTime) {
       continue
     }
@@ -72,11 +75,11 @@ async function run() {
     if (!trip) {
       continue
     }
-    console.log(trip)
+    log('Trip:', trip)
 
     if (update.trip.scheduleRelationship === ScheduleRelationship.UNSCHEDULED) {
       const message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`
-      console.log(message)
+      log(message)
       sendSMS(message)
       return
     }
@@ -87,7 +90,7 @@ async function run() {
       continue
     }
 
-    console.log(stopUpdate)
+    log('Update for stop:', stopUpdate)
 
     // Send alert if train is cancelled or delayed
     let message = `No date for ${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)}`
@@ -101,7 +104,7 @@ async function run() {
         message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`
       }
     }
-    console.log(message)
+    log(message)
     sendSMS(message)
   }
 }

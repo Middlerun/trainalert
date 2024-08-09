@@ -32,7 +32,7 @@ export async function readFilteredTrainsCSV(filename: string, filter: (record: {
   })
 }
 
-export async function getTripUpdates(tripIds: Set<string>): Promise<any | null> {
+export async function getTripUpdates(tripIds: Set<string>, log: (...messages: Array<any>) => void): Promise<any | null> {
   const apiUrl = 'https://api.transport.nsw.gov.au/v2/gtfs/realtime/sydneytrains'
   try {
     // Fetch the data from the web API
@@ -58,7 +58,7 @@ export async function getTripUpdates(tripIds: Set<string>): Promise<any | null> 
     // If no updates are found, return null
     return updates
   } catch (error) {
-    console.error("Error fetching or processing data:", error)
+    log("Error fetching or processing data:", error)
     return null
   }
 }
@@ -81,7 +81,7 @@ function getFilenameFromContentDisposition(contentDisposition: string): string |
 * Downloads a file via an API if it does not already exist in the current directory.
 * @param url - The URL to download the file from.
 */
-export async function downloadDataFileZip(): Promise<string | undefined> {
+export async function downloadDataFileZip(log: (...messages: Array<any>) => void): Promise<string | undefined> {
   if (!process.env.ENABLE_DATA_REFRESH) {
     return
   }
@@ -106,7 +106,7 @@ export async function downloadDataFileZip(): Promise<string | undefined> {
 
       // Check if the file already exists
       if (fs.existsSync(filePath)) {
-        console.log(`File "${filename}" already exists. Skipping download.`)
+        log(`File "${filename}" already exists. Skipping download.`)
         return
       }
 
@@ -122,18 +122,18 @@ export async function downloadDataFileZip(): Promise<string | undefined> {
         writer.on('error', reject)
       })
 
-      console.log(`File "${filename}" downloaded successfully.`)
+      log(`File "${filename}" downloaded successfully.`)
       return filePath
     } else {
-      console.log('The response does not contain a "content-disposition: attachment" header.')
+      log('The response does not contain a "content-disposition: attachment" header.')
     }
   } catch (error) {
-    console.error(`Error downloading the file: ${error.message}`)
+    log(`Error downloading the file: ${error.message}`)
   }
 }
 
 const regex = /sydneytrains_GTFS_\d+.zip/
-export async function deleteOldDataZips(currentFileName: string): Promise<void> {
+export async function deleteOldDataZips(currentFileName: string, log: (...messages: Array<any>) => void): Promise<void> {
   const directoryPath = __dirname
 
   try {
@@ -145,14 +145,14 @@ export async function deleteOldDataZips(currentFileName: string): Promise<void> 
         const filePath = path.join(directoryPath, file)
         try {
           await fs.promises.unlink(filePath)
-          console.log(`Deleted old zip file "${file}".`)
+          log(`Deleted old zip file "${file}".`)
         } catch (err) {
-          console.error(`Error deleting old zip file "${file}": ${err.message}`)
+          log(`Error deleting old zip file "${file}": ${err.message}`)
         }
       })
 
     await Promise.all(deletePromises)
   } catch (err) {
-    console.error(`Unable to scan directory: ${err.message}`)
+    log(`Unable to scan directory: ${err.message}`)
   }
 }
