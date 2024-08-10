@@ -17,4 +17,6 @@ The script relies on two services:
 
 Set up accounts for each, and set up Twilio for sending SMS to you. Then fill in the environment variables.
 
+Run with `yarn start`.
+
 Set up the script to run via cron whenever you want to be notified.
