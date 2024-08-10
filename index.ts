@@ -57,6 +57,11 @@ async function run() {
 
   const updates = await getTripUpdates(relevantTripIds, log)
 
+  if (updates.length === 0) {
+    log('No updates found')
+    return
+  }
+
   for (const update of updates) {
     log('Update:', update)
 
