@@ -123,7 +123,7 @@ export async function downloadDataFileZip(log: (...messages: Array<any>) => void
       })
 
       log(`File "${filename}" downloaded successfully.`)
-      return filePath
+      return filename
     } else {
       log('The response does not contain a "content-disposition: attachment" header.')
     }
