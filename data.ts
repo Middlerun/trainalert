@@ -3,6 +3,7 @@ import * as path from 'path'
 import { parse } from 'csv-parse'
 import axios from 'axios'
 import * as protobuf from 'protobufjs'
+import { log } from './log'
 
 export async function readFilteredTrainsCSV(filename: string, filter: (record: { [key: string]: string }) => boolean): Promise<Array<{ [key: string]: string }>> {
   const filePath = path.join('sydneytrains_GTFS', filename)
@@ -32,7 +33,7 @@ export async function readFilteredTrainsCSV(filename: string, filter: (record: {
   })
 }
 
-export async function getTripUpdates(tripIds: Set<string>, log: (...messages: Array<any>) => void): Promise<any | null> {
+export async function getTripUpdates(tripIds: Set<string>): Promise<Array<any> | null> {
   const apiUrl = 'https://api.transport.nsw.gov.au/v2/gtfs/realtime/sydneytrains'
   try {
     // Fetch the data from the web API
@@ -81,7 +82,7 @@ function getFilenameFromContentDisposition(contentDisposition: string): string |
 * Downloads a file via an API if it does not already exist in the current directory.
 * @param url - The URL to download the file from.
 */
-export async function downloadDataFileZip(log: (...messages: Array<any>) => void): Promise<string | undefined> {
+export async function downloadDataFileZip(): Promise<string | undefined> {
   if (!process.env.ENABLE_DATA_REFRESH) {
     return
   }
@@ -133,7 +134,7 @@ export async function downloadDataFileZip(log: (...messages: Array<any>) => void
 }
 
 const regex = /sydneytrains_GTFS_\d+.zip/
-export async function deleteOldDataZips(currentFileName: string, log: (...messages: Array<any>) => void): Promise<void> {
+export async function deleteOldDataZips(currentFileName: string): Promise<void> {
   const directoryPath = __dirname
 
   try {

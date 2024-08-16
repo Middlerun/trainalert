@@ -5,7 +5,7 @@ import * as unzipper from 'unzipper'
 
 import { readFilteredTrainsCSV, getTripUpdates, downloadDataFileZip, deleteOldDataZips } from './data'
 import { sendSMS } from './sms'
-import { deleteOldLogs, initialiseLogger } from './log'
+import { deleteOldLogs, initialiseLogger, log } from './log'
 
 enum ScheduleRelationship {
   SCHEDULED = 0,
@@ -17,17 +17,17 @@ enum ScheduleRelationship {
 const MIN_DELAY_TO_NOTIFY = 30 // seconds
 
 async function run() {
-  const log = initialiseLogger()
+  initialiseLogger()
   deleteOldLogs()
 
   // Download the GTFS files
-  const dataFileZipFilename = await downloadDataFileZip(log)
+  const dataFileZipFilename = await downloadDataFileZip()
 
   if (dataFileZipFilename) {
     await fs.createReadStream(dataFileZipFilename)
       .pipe(unzipper.Extract({ path: path.join(__dirname, 'sydneytrains_GTFS') }))
       .promise()
-    await deleteOldDataZips(dataFileZipFilename, log)
+    await deleteOldDataZips(dataFileZipFilename)
   }
 
   // Get stops
@@ -55,7 +55,7 @@ async function run() {
 
   const relevantTripIds = new Set(relevantStopTimes.map((stopTime) => stopTime.trip_id))
 
-  const updates = await getTripUpdates(relevantTripIds, log)
+  const updates = await getTripUpdates(relevantTripIds)
 
   if (!updates) {
     sendSMS('Could not check for train delays - could not fetch real-time data')
@@ -85,7 +85,6 @@ async function run() {
 
     if (update.trip.scheduleRelationship === ScheduleRelationship.UNSCHEDULED) {
       const message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`
-      log(message)
       sendSMS(message)
       return
     }
@@ -110,7 +109,6 @@ async function run() {
         message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`
       }
     }
-    log(message)
     sendSMS(message)
   }
 }
@@ -122,5 +120,5 @@ function formatSeconds(seconds: number) {
     return `${seconds} second${seconds !== 1 ? 's' : ''}`
   }
   const minutes = Math.round(seconds / 60)
-  return `${minutes} minute ${minutes !== 1 ? 's' : ''}`
+  return `${minutes} minute${minutes !== 1 ? 's' : ''}`
 }
