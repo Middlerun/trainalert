@@ -57,6 +57,11 @@ async function run() {
 
   const updates = await getTripUpdates(relevantTripIds, log)
 
+  if (!updates) {
+    sendSMS('Could not check for train delays - could not fetch real-time data')
+    return
+  }
+
   if (updates.length === 0) {
     log('No updates found')
     return
