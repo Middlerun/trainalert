@@ -83,7 +83,7 @@ function getFilenameFromContentDisposition(contentDisposition: string): string |
 * @param url - The URL to download the file from.
 */
 export async function downloadDataFileZip(): Promise<string | undefined> {
-  if (!process.env.ENABLE_DATA_REFRESH) {
+  if (process.env.DISABLE_DATA_REFRESH) {
     return
   }
   const url = 'https://api.transport.nsw.gov.au/v1/gtfs/schedule/sydneytrains'
