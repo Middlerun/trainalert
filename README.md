@@ -10,12 +10,17 @@ Thus, this project was born. The **Sydney train disruption notifier** is a scrip
 
 ## Setup
 
-The script relies on two services:
+The script relies on [Transport for NSW Open Data](https://opendata.transport.nsw.gov.au/), which provides APIs for real-time transport information.
 
-- [Transport for NSW Open Data](https://opendata.transport.nsw.gov.au/), which provides APIs for real-time transport information
-- [Twilio](https://www.twilio.com/), for sending SMS messages
+There are two options for notifications:
+- SMS via [Twilio](https://www.twilio.com/)
+- Push notifications via [NotifyDroid](https://play.google.com/store/apps/details?id=net.xdroid.pn)
 
-Set up accounts for each, and set up Twilio for sending SMS to you. Then fill in the environment variables.
+Set up an account for Open Data (and Twilio if you're using it). Then fill in the environment variables.
+
+To find the appropriate value for the `ROUTE_PREFIX` variable, look at `routes.txt` in the GTFS data (automatically downloaded when you run the script), and find a prefix that covers the routes you're interested in. For example, if you're going from Newcastle to Central then you'll want either the CCN_2a or CCN_2b route, in which case you'd use the prefix `CCN_2` to cover both routes. But if you're going from Newcastle to Strathfield, you would use `CCN_2a` to get just the route that goes via Strathfield.
+
+Similarly, use `stops.txt` to ensure that your `STATION_NAME` variable matches the name for that station in the file. It only has to match a substring, so for example `Sydenham Station` will match any platform at Sydenham, but you could use a more specific value e.g. `Sydenham Station Platform 4`, if you only want notifications about trains on that platform.
 
 Run with `yarn start`.
 

@@ -4,7 +4,7 @@ import * as path from 'path'
 import * as unzipper from 'unzipper'
 
 import { readFilteredTrainsCSV, getTripUpdates, downloadDataFileZip, deleteOldDataZips } from './data'
-import { sendSMS } from './sms'
+import { sendNotification } from './notification'
 import { deleteOldLogs, initialiseLogger, log } from './log'
 
 enum ScheduleRelationship {
@@ -49,7 +49,7 @@ async function run() {
 
   if (relevantStopTimes.length === 0) {
     log('No relevant stop times found')
-    sendSMS('Could not check for train delays - no relevant stop times found in timetable data')
+    sendNotification('Error', 'Could not check for train delays - no relevant stop times found in timetable data')
     return
   }
 
@@ -58,7 +58,7 @@ async function run() {
   const updates = await getTripUpdates(relevantTripIds)
 
   if (!updates) {
-    sendSMS('Could not check for train delays - could not fetch real-time data')
+    sendNotification('Error', 'Could not check for train delays - could not fetch real-time data')
     return
   }
 
@@ -84,8 +84,7 @@ async function run() {
     log('Trip:', trip)
 
     if (update.trip.scheduleRelationship === ScheduleRelationship.UNSCHEDULED) {
-      const message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`
-      sendSMS(message)
+      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`)
       return
     }
 
@@ -98,18 +97,19 @@ async function run() {
     log('Update for stop:', stopUpdate)
 
     // Send alert if train is cancelled or delayed
-    let message = `No date for ${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)}`
     if (stopUpdate.scheduleRelationship === ScheduleRelationship.SKIPPED) {
-      message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`
+      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`)
     } else if (stopUpdate.scheduleRelationship === ScheduleRelationship.SCHEDULED) {
-      message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is on time`
       if (stopUpdate.departure && stopUpdate.departure.delay > MIN_DELAY_TO_NOTIFY) {
-        message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is delayed by ${formatSeconds(stopUpdate.departure.delay)}`
+        sendNotification('Train delayed', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is delayed by ${formatSeconds(stopUpdate.departure.delay)}`)
       } else if (stopUpdate.departure && stopUpdate.departure.delay < -MIN_DELAY_TO_NOTIFY) {
-        message = `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`
+        sendNotification('Train early', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`)
+      } else {
+        sendNotification('Train on time', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is on time`)
       }
+    } else {
+      sendNotification('Error', `No data for ${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)}`)
     }
-    sendSMS(message)
   }
 }
 

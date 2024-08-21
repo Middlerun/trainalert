@@ -37,7 +37,7 @@ export async function getTripUpdates(tripIds: Set<string>): Promise<Array<any> |
   const apiUrl = 'https://api.transport.nsw.gov.au/v2/gtfs/realtime/sydneytrains'
   try {
     // Fetch the data from the web API
-    const response = await axios.get<ArrayBuffer>(apiUrl, { responseType: 'arraybuffer', headers: { Authorization: `Bearer apikey ${process.env.API_TOKEN}` } })
+    const response = await axios.get<ArrayBuffer>(apiUrl, { responseType: 'arraybuffer', headers: { Authorization: `Bearer apikey ${process.env.TFNSW_API_TOKEN}` } })
 
     // Load the protobuf schema dynamically
     const root = await protobuf.load("gtfs-realtime.proto")
@@ -93,7 +93,7 @@ export async function downloadDataFileZip(): Promise<string | undefined> {
       method: 'get',
       url: url,
       responseType: 'stream',
-      headers: { Authorization: `Bearer apikey ${process.env.API_TOKEN}` }
+      headers: { Authorization: `Bearer apikey ${process.env.TFNSW_API_TOKEN}` }
     })
 
     const contentDisposition = response.headers['content-disposition']
