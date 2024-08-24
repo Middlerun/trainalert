@@ -16,12 +16,22 @@ There are two options for notifications:
 - Push notifications via [NotifyDroid](https://play.google.com/store/apps/details?id=net.xdroid.pn)
 - SMS via [Twilio](https://www.twilio.com/)
 
-Set up an account for Open Data (and Twilio if you're using it). Then fill in the environment variables. If both notification methods are configured, the notification will be sent via NotifyDroid, with SMS serving as a backup method if NotifyDroid fails.
+Set up an account for Open Data (and Twilio if you're using it). Then fill in the environment variables. If both notification methods are configured, the notification will be sent via NotifyDroid, with SMS as a backup method.
 
-To find the appropriate value for the `ROUTE_PREFIX` variable, look at `routes.txt` in the GTFS data (automatically downloaded when you run the script), and find a prefix that covers the routes you're interested in. For example, if you're going from Newcastle to Central then you'll want either the CCN_2a or CCN_2b route, in which case you'd use the prefix `CCN_2` to cover both routes. But if you're going from Newcastle to Strathfield, you would use `CCN_2a` to get just the route that goes via Strathfield.
+Run script with:
 
-Similarly, use `stops.txt` to ensure that your `STATION_NAME` variable matches the name for that station in the file. It only has to match a substring, so for example `Sydenham Station` will match any platform at Sydenham, but you could use a more specific value e.g. `Sydenham Station Platform 4`, if you only want notifications about trains on that platform.
+```
+yarn start <route prefix> <station name> <train time>
+```
 
-Run with `yarn start`.
+To find the appropriate value for the route prefix, look at `routes.txt` in the GTFS data (automatically downloaded when you run the script), and find a prefix that covers the routes you're interested in. For example, if you're going from Newcastle to Central then you'll want either the CCN_2a or CCN_2b route, in which case you'd use the prefix `CCN_2` to cover both routes. But if you're going from Newcastle to Strathfield, you would use `CCN_2a` to get just the route that goes via Strathfield.
+
+Similarly, use `stops.txt` to ensure that your station name argument matches the name for that station in the file. It only has to match a substring, so for example `Sydenham Station` (or just `Sydenham`) will match any platform at Sydenham, but you could use a more specific value e.g. `Sydenham Station Platform 4`, if you only want notifications about trains on that platform.
+
+Example:
+
+```
+yarn start IWL_2 "Summer Hill" 08:02
+```
 
 Set up the script to run via cron whenever you want to be notified.
