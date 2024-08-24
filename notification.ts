@@ -7,29 +7,48 @@ export function sendViaSMS(title: string, body: string) {
   if (!twilioClient) {
     twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   }
-  twilioClient.messages
+  log('Sending SMS')
+  return twilioClient.messages
     .create({
       body,
       from: process.env.SMS_SENDER_NUMBER,
       to: process.env.SMS_RECIPIENT_NUMBER,
     })
-    .then(message => log('SID:', message.sid))
-    .catch(error => log('Could not send SMS:', error))
+    .then(message => {
+      log('SID:', message.sid)
+      return true
+    })
+    .catch(error => {
+      log('Failed to send SMS:', error)
+      return false
+    })
 }
 
 export function sendViaNotifyDroid(title: string, body: string) {
+  log('Sending notification via NotifyDroid')
   const queryParams = new URLSearchParams({
     k: process.env.NOTIFYDROID_API_KEY!,
     t: title,
     c: body,
   })
   const url = `http://xdroid.net/api/message?${queryParams.toString()}`
-  axios.post(url)
-    .then(response => log('Push notification API response:', response.data))
-    .catch(error => log('Could not send push notification:', error, error.response?.data))
+  return axios.post(url)
+    .then(response => {
+      log('Push notification API response:', response.data)
+      return true
+    })
+    .catch(error => {
+      log('Failed to send push notification:', error, error.response?.data)
+      return false
+    })
 }
 
 const notificationChannels = [
+  {
+    name: 'NotifyDroid',
+    enabled: !!process.env.NOTIFYDROID_API_KEY,
+    send: sendViaNotifyDroid,
+  },
   {
     name: 'SMS',
     enabled: !!(
@@ -40,16 +59,22 @@ const notificationChannels = [
     ),
     send: sendViaSMS,
   },
-  {
-    name: 'NotifyDroid',
-    enabled: !!process.env.NOTIFYDROID_API_KEY,
-    send: sendViaNotifyDroid,
-  },
-] satisfies Array<{ name: string; enabled: boolean; send: (title: string, body: string) => void }>
+] satisfies Array<{
+  name: string
+  enabled: boolean
+  send: (title: string, body: string) => Promise<boolean>
+}>
 
 const enabledChannels = notificationChannels.filter(channel => channel.enabled)
 
-export function sendNotification(title: string, body: string) {
-  log('Sending notification', { channels: enabledChannels.map(c => c.name), title, body })
-  enabledChannels.forEach(channel => channel.send(title, body))
+export async function sendNotification(title: string, body: string) {
+  log('Sending notification:', { title, body })
+  let sent = false
+  for (const channel of enabledChannels) {
+    sent = await channel.send(title, body)
+    if (sent) { break }
+  }
+  if (!sent) {
+    log('All notification channels failed')
+  }
 }

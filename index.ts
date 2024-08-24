@@ -5,7 +5,7 @@ import * as unzipper from 'unzipper'
 
 import { readFilteredTrainsCSV, getTripUpdates, downloadDataFileZip, deleteOldDataZips } from './data'
 import { sendNotification } from './notification'
-import { deleteOldLogs, initialiseLogger, log } from './log'
+import { deleteOldLogs, initialiseFileLogger, log } from './log'
 
 enum ScheduleRelationship {
   SCHEDULED = 0,
@@ -17,7 +17,7 @@ enum ScheduleRelationship {
 const MIN_DELAY_TO_NOTIFY = 30 // seconds
 
 async function run() {
-  initialiseLogger()
+  initialiseFileLogger()
   deleteOldLogs()
 
   // Download the GTFS files

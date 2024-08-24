@@ -3,29 +3,29 @@ import * as path from 'path'
 
 const logsDir = path.join(__dirname, 'logs')
 
-let logFilePath: string | null = null
+let writeLog: ((...messages: Array<any>) => void) | null = null
 
-export function initialiseLogger(): void {
+export function initialiseFileLogger(): void {
   const now = new Date()
   const logFilename = `log_${now.toISOString().replace(/:/g, '-')}.txt`
-  logFilePath = path.join(logsDir, logFilename)
+  const logFilePath = path.join(logsDir, logFilename)
   if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir)
+  }
+  writeLog = (...messages: Array<any>) => {
+    const message = messages.map(m => {
+      if (typeof m === 'object') {
+        return JSON.stringify(m, null, 2)
+      }
+      return m
+    }).join(' ')
+    fs.appendFileSync(logFilePath, `${message}\n`)
   }
 }
 
 export function log(...messages: Array<any>): void {
-  if (!logFilePath) {
-    throw new Error('Logger not initialised')
-  }
   console.log(...messages)
-  const message = messages.map(m => {
-    if (typeof m === 'object') {
-      return JSON.stringify(m, null, 2)
-    }
-    return m
-  }).join(' ')
-  fs.appendFileSync(logFilePath, `${message}\n`)
+  writeLog?.(...messages)
 }
 
 export function deleteOldLogs() {
