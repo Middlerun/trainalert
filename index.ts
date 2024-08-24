@@ -29,6 +29,8 @@ async function run() {
   initialiseFileLogger()
   deleteOldLogs()
 
+  log('Arguments:', { routePrefix, stationName, trainTime })
+
   // Download the GTFS files
   const dataFileZipFilename = await downloadDataFileZip()
 
