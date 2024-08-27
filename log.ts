@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-const logsDir = path.join(__dirname, 'logs')
+export const logsDir = path.join(__dirname, 'logs')
 
 let writeLog: ((...messages: Array<any>) => void) | null = null
 

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { log } from './log'
+import { checkNotificationSent, recordNotification } from './notificationRecord'
 
 let twilioClient: any
 
@@ -67,12 +68,22 @@ const notificationChannels = [
 
 const enabledChannels = notificationChannels.filter(channel => channel.enabled)
 
-export async function sendNotification(title: string, body: string) {
-  log('Sending notification:', { title, body })
+export async function sendNotification(title: string, body: string, notificationKey?: string) {
+  log('Notification:', { title, body })
+  const notificationRecord = notificationKey ? checkNotificationSent(notificationKey, title, body) : undefined
+  if (notificationRecord) {
+    log(`Already sent at ${new Date(notificationRecord.timestamp).toISOString()} - skipping send`)
+    return
+  }
+
   let sent = false
   for (const channel of enabledChannels) {
     sent = await channel.send(title, body)
     if (sent) { break }
+  }
+
+  if (sent && notificationKey) {
+    recordNotification(notificationKey, title, body)
   }
   if (!sent) {
     log('All notification channels failed')

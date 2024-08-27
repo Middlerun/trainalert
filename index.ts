@@ -88,6 +88,8 @@ async function run() {
     }
     const scheduledDepartureTime = scheduledStopTime.departure_time.slice(0, 5)
 
+    const notificationKey = `${scheduledStopTime.trip_id}_${scheduledStopTime.stop_id}`
+
     const trip = tripForId.get(update.trip.tripId)
     if (!trip) {
       continue
@@ -95,7 +97,7 @@ async function run() {
     log('Trip:', trip)
 
     if (update.trip.scheduleRelationship === ScheduleRelationship.UNSCHEDULED) {
-      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`)
+      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`, notificationKey)
       return
     }
 
@@ -109,17 +111,17 @@ async function run() {
 
     // Send alert if train is cancelled or delayed
     if (stopUpdate.scheduleRelationship === ScheduleRelationship.SKIPPED) {
-      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`)
+      sendNotification('Train cancelled', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} has been cancelled`, notificationKey)
     } else if (stopUpdate.scheduleRelationship === ScheduleRelationship.SCHEDULED) {
       if (stopUpdate.departure && stopUpdate.departure.delay > MIN_DELAY_TO_NOTIFY) {
-        sendNotification('Train delayed', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is delayed by ${formatSeconds(stopUpdate.departure.delay)}`)
+        sendNotification('Train delayed', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is delayed by ${formatSeconds(stopUpdate.departure.delay)}`, notificationKey)
       } else if (stopUpdate.departure && stopUpdate.departure.delay < -MIN_DELAY_TO_NOTIFY) {
-        sendNotification('Train early', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`)
+        sendNotification('Train early', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`, notificationKey)
       } else {
-        sendNotification('Train on time', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is on time`)
+        sendNotification('Train on time', `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is on time`, notificationKey)
       }
     } else {
-      sendNotification('Error', `No data for ${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)}`)
+      sendNotification('Error', `No data for ${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)}`, notificationKey)
     }
   }
 }
