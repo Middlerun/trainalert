@@ -4,6 +4,10 @@ import { parse } from 'csv-parse'
 import axios from 'axios'
 import * as protobuf from 'protobufjs'
 import { log } from './log'
+import { transit_realtime } from './gtfs-realtime'
+
+export const TripScheduleRelationship = transit_realtime.TripDescriptor.ScheduleRelationship
+export const StopScheduleRelationship = transit_realtime.TripUpdate.StopTimeUpdate.ScheduleRelationship
 
 export async function readFilteredTrainsCSV(filename: string, filter: (record: { [key: string]: string }) => boolean): Promise<Array<{ [key: string]: string }>> {
   const filePath = path.join('sydneytrains_GTFS', filename)
@@ -33,25 +37,28 @@ export async function readFilteredTrainsCSV(filename: string, filter: (record: {
   })
 }
 
-export async function getTripUpdates(tripIds: Set<string>): Promise<Array<any> | null> {
+export async function getTripUpdates(tripIds: Set<string>): Promise<Array<transit_realtime.ITripUpdate> | null> {
   const apiUrl = 'https://api.transport.nsw.gov.au/v2/gtfs/realtime/sydneytrains'
   try {
     // Fetch the data from the web API
     const response = await axios.get<ArrayBuffer>(apiUrl, { responseType: 'arraybuffer', headers: { Authorization: `Bearer apikey ${process.env.TFNSW_API_TOKEN}` } })
 
-    // Load the protobuf schema dynamically
+    // Load the GTFS Realtime FeedMessage from the protobuf
     const root = await protobuf.load("gtfs-realtime.proto")
     const FeedMessage = root.lookupType("transit_realtime.FeedMessage")
 
     // Decode the protobuf response
     const message = FeedMessage.decode(new Uint8Array(response.data))
-    const feed = FeedMessage.toObject(message, { defaults: true })
+    const feed = FeedMessage.toObject(message, { defaults: true }) as transit_realtime.IFeedMessage
+    if (!feed.entity) {
+      throw new Error('No entities found in the feed message')
+    }
 
-    const updates: Array<any> = []
+    const updates: Array<transit_realtime.ITripUpdate> = []
 
     // Search for the trip updates for the specified trip_id and stop_id
     for (const entity of feed.entity) {
-      if (entity.tripUpdate && entity.tripUpdate.trip && tripIds.has(entity.tripUpdate.trip.tripId)) {
+      if (entity.tripUpdate && entity.tripUpdate.trip && tripIds.has(entity.tripUpdate.trip.tripId!)) {
         updates.push(entity.tripUpdate)
       }
     }
