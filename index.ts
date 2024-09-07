@@ -7,7 +7,8 @@ import { readFilteredTrainsCSV, getTripUpdates, downloadDataFileZip, deleteOldDa
 import { sendNotification } from './notification'
 import { deleteOldLogs, initialiseFileLogger, log } from './log'
 
-const MIN_DELAY_TO_NOTIFY = 30 // seconds
+const MINIMUM_EARLY_TO_NOTIFY = 30 // seconds
+const MINIMUM_DELAY_TO_NOTIFY = 90 // seconds
 
 // Command line arguments
 if (process.argv.length !== 5) {
@@ -114,13 +115,13 @@ async function run() {
         notificationKey,
       )
     } else if (stopUpdate.scheduleRelationship === StopScheduleRelationship.SCHEDULED) {
-      if (stopUpdate.departure && stopUpdate.departure.delay && stopUpdate.departure.delay > MIN_DELAY_TO_NOTIFY) {
+      if (stopUpdate.departure && stopUpdate.departure.delay && stopUpdate.departure.delay > MINIMUM_DELAY_TO_NOTIFY) {
         sendNotification(
           'Train delayed',
           `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is delayed by ${formatSeconds(stopUpdate.departure.delay)}`,
           notificationKey,
         )
-      } else if (stopUpdate.departure && stopUpdate.departure.delay && stopUpdate.departure.delay < -MIN_DELAY_TO_NOTIFY) {
+      } else if (stopUpdate.departure && stopUpdate.departure.delay && stopUpdate.departure.delay < -MINIMUM_EARLY_TO_NOTIFY) {
         sendNotification(
           'Train early',
           `${scheduledDepartureTime} train at ${stopNameForId.get(scheduledStopTime.stop_id)} is early by ${formatSeconds(-stopUpdate.departure.delay)}`,
@@ -145,10 +146,14 @@ async function run() {
 
 run()
 
+function plural(n: number, singular: string, plural: string = `${singular}s`) {
+  return n === 1 ? singular : plural
+}
+
 function formatSeconds(seconds: number) {
   if (seconds < 60) {
-    return `${seconds} second${seconds !== 1 ? 's' : ''}`
+    return plural(seconds, 'second')
   }
   const minutes = Math.round(seconds / 60)
-  return `${minutes} minute${minutes !== 1 ? 's' : ''}`
+  return plural(minutes, 'minute')
 }
