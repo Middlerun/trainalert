@@ -147,7 +147,7 @@ async function run() {
 run()
 
 function plural(n: number, singular: string, plural: string = `${singular}s`) {
-  return n === 1 ? singular : plural
+  return `${n} ${n === 1 ? singular : plural}`
 }
 
 function formatSeconds(seconds: number) {
