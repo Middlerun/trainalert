@@ -24,7 +24,7 @@ Run script with:
 yarn start <route prefix> <station name> <train time>
 ```
 
-To find the appropriate value for the route prefix, look at `routes.txt` in the GTFS data (automatically downloaded when you run the script), and find a prefix that covers the routes you're interested in. For example, if you're going from Newcastle to Central then you'll want either the CCN_2a or CCN_2b route, in which case you'd use the prefix `CCN_2` to cover both routes. But if you're going from Newcastle to Strathfield, you would use `CCN_2a` to get just the route that goes via Strathfield.
+To find the appropriate value for the route prefix, look at `routes.txt` in the GTFS data (automatically downloaded when you run the script), and find a prefix that covers the routes you're interested in. For example, if you're going from Newcastle to Central then you'll want either the CCN_2a or CCN_2b route, in which case you'd use the prefix `CCN_2` to cover both routes. But if you're going from Newcastle to Strathfield, you would use `CCN_2a` to get just the route that goes via Strathfield. You can also run the script with `?` as the route prefix to see which stops match the station and time, and determine the route that way.
 
 Similarly, use `stops.txt` to ensure that your station name argument matches the name for that station in the file. It only has to match a substring, so for example `Sydenham Station` (or just `Sydenham`) will match any platform at Sydenham, but you could use a more specific value e.g. `Sydenham Station Platform 4`, if you only want notifications about trains on that platform.
 

@@ -40,6 +40,24 @@ async function run() {
   const stationStopIds = new Set(stationStops.map((stop) => stop.stop_id))
   const stopNameForId = new Map(stationStops.map((stop) => [stop.stop_id, stop.stop_name]))
 
+  if (routePrefix === '?') {
+    // Find routes that have a stop matching the station and time
+    const matchingStops = await readFilteredTrainsCSV('stop_times.txt', (record) => (
+      stationStopIds.has(record.stop_id) &&
+      record.departure_time.startsWith(trainTime)
+    ))
+    const matchingTripIds = new Set(matchingStops.map((stop) => stop.trip_id))
+
+    const routeTrips = await readFilteredTrainsCSV('trips.txt', (record) => matchingTripIds.has(record.trip_id))
+    const tripForId = new Map(routeTrips.map((trip) => [trip.trip_id, trip]))
+
+    log('Stops:', matchingStops.map((stop) => ({
+      stop,
+      trip: tripForId.get(stop.trip_id),
+    })))
+    return
+  }
+
   // Get trips
   const routeTrips = await readFilteredTrainsCSV('trips.txt', (record) => record.route_id.startsWith(routePrefix))
   const routeTripIds = new Set(routeTrips.map((trip) => trip.trip_id))
