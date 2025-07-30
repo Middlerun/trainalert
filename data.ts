@@ -140,7 +140,7 @@ export async function downloadDataFileZip(): Promise<string | undefined> {
   }
 }
 
-const regex = /sydneytrains_GTFS_\d+.zip/
+const dataZipRegex = /sydneytrains_GTFS_.+\.zip/
 export async function deleteOldDataZips(currentFileName: string): Promise<void> {
   const directoryPath = __dirname
 
@@ -148,7 +148,7 @@ export async function deleteOldDataZips(currentFileName: string): Promise<void> 
     const files = await fs.promises.readdir(directoryPath)
 
     const deletePromises = files
-      .filter(file => regex.test(file) && file !== currentFileName)
+      .filter(file => dataZipRegex.test(file) && file !== currentFileName)
       .map(async file => {
         const filePath = path.join(directoryPath, file)
         try {
