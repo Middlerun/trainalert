@@ -8,7 +8,6 @@ export function sendViaSMS(title: string, body: string) {
   if (!twilioClient) {
     twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   }
-  log('Sending SMS')
   return twilioClient.messages
     .create({
       body,
@@ -26,7 +25,6 @@ export function sendViaSMS(title: string, body: string) {
 }
 
 export function sendViaNotifyDroid(title: string, body: string) {
-  log('Sending notification via NotifyDroid')
   const queryParams = new URLSearchParams({
     k: process.env.NOTIFYDROID_API_KEY!,
     t: title,
@@ -35,7 +33,25 @@ export function sendViaNotifyDroid(title: string, body: string) {
   const url = `http://xdroid.net/api/message?${queryParams.toString()}`
   return axios.post(url)
     .then(response => {
-      log('Push notification API response:', response.data)
+      log('NotifyDroid API response:', response.data)
+      return true
+    })
+    .catch(error => {
+      log('Failed to send push notification:', error, error.response?.data)
+      return false
+    })
+}
+
+export function sendViaPushover(title: string, body: string) {
+  const postBody = {
+    token: process.env.PUSHOVER_APP_TOKEN!,
+    user: process.env.PUSHOVER_USER_TOKEN!,
+    title,
+    message: body,
+  }
+  return axios.post('https://api.pushover.net/1/messages.json', postBody)
+    .then(response => {
+      log('Pushover API response:', response.data)
       return true
     })
     .catch(error => {
@@ -49,6 +65,14 @@ const notificationChannels = [
     name: 'NotifyDroid',
     enabled: !!process.env.NOTIFYDROID_API_KEY,
     send: sendViaNotifyDroid,
+  },
+  {
+    name: 'Pushover',
+    enabled: !!(
+      process.env.PUSHOVER_APP_TOKEN &&
+      process.env.PUSHOVER_USER_TOKEN
+    ),
+    send: sendViaPushover,
   },
   {
     name: 'SMS',
@@ -78,6 +102,7 @@ export async function sendNotification(title: string, body: string, notification
 
   let sent = false
   for (const channel of enabledChannels) {
+    log(`Sending notification via ${channel.name}`)
     sent = await channel.send(title, body)
     if (sent) { break }
   }
