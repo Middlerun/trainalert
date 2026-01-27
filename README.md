@@ -13,10 +13,11 @@ Thus, this project was born. The **Sydney train disruption notifier** is a scrip
 The script relies on [Transport for NSW Open Data](https://opendata.transport.nsw.gov.au/), which provides APIs for real-time transport information.
 
 There are two options for notifications:
+- Push notification via [Pushover](https://pushover.net/)
 - Push notifications via [NotifyDroid](https://play.google.com/store/apps/details?id=net.xdroid.pn)
 - SMS via [Twilio](https://www.twilio.com/)
 
-Set up an account for Open Data (and Twilio if you're using it). Then fill in the environment variables. If both notification methods are configured, the notification will be sent via NotifyDroid, with SMS as a backup method.
+Set up an account for Open Data and whichever notification method you prefer (I'd recommend Pushover). Then fill in the environment variables. If multiple notification methods are configured, it will try each until one is successful.
 
 Run script with:
 

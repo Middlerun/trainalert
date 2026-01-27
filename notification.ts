@@ -62,17 +62,17 @@ export function sendViaPushover(title: string, body: string) {
 
 const notificationChannels = [
   {
-    name: 'NotifyDroid',
-    enabled: !!process.env.NOTIFYDROID_API_KEY,
-    send: sendViaNotifyDroid,
-  },
-  {
     name: 'Pushover',
     enabled: !!(
       process.env.PUSHOVER_APP_TOKEN &&
       process.env.PUSHOVER_USER_TOKEN
     ),
     send: sendViaPushover,
+  },
+  {
+    name: 'NotifyDroid',
+    enabled: !!process.env.NOTIFYDROID_API_KEY,
+    send: sendViaNotifyDroid,
   },
   {
     name: 'SMS',
